@@ -146,12 +146,15 @@
         }
 
         .terminal-content .output {
-            color: #f8f8f2;
+            color: var(--secondary);
             margin-left: 16px;
         }
 
         .terminal-content .output-header {
-            color: #bd93f9;
+            background: linear-gradient(135deg, var(--accent), var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
             margin-left: 16px;
             font-weight: bold;
         }
@@ -993,29 +996,28 @@
                 </div>
                 <div class="terminal-content" id="terminal-content">
                     <div id="command-history">
-                        <p><span class="prompt">user@cozy</span> <span class="command">~</span> $ <span class="command-text">cozyui help</span></p>
+                        <p><span class="prompt">user@cozy</span> <span class="command">~</span> $ <span
+                                class="command-text">cozyui help</span></p>
                         <p class="output-header">CozyUI Terminal - Enhance your terminal experience</p>
                         <p class="output">Usage: cozyui [command] [options]</p>
                         <p class="output"></p>
                         <p class="output">Core Commands:</p>
-                        <p class="output">  theme [name|list]       Set or list themes</p>
-                        <p class="output">  plugin [action] [name]  Manage plugins</p>
-                        <p class="output">  config                  Open configuration</p>
-                        <p class="output">  update                  Check for updates</p>
-                        <p class="output">  status                  Show CozyUI status</p>
-                        <p class="output">  help [command]          Show help for specific command</p>
+                        <p class="output"> theme [name|list] Set or list themes</p>
+                        <p class="output"> plugin [action] [name] Manage plugins</p>
+                        <p class="output"> config Open configuration</p>
+                        <p class="output"> update Check for updates</p>
+                        <p class="output"> status Show CozyUI status</p>
+                        <p class="output"> help [command] Show help for specific command</p>
                         <p class="output"></p>
                         <p class="output">Utility Commands:</p>
-                        <p class="output">  search                  Search command history</p>
-                        <p class="output">  visual                  Toggle visual data mode</p>
-                        <p class="output">  backup                  Backup your configuration</p>
-                        <p class="output">  restore                 Restore from backup</p>
+                        <p class="output"> search Search command history</p>
+                        <p class="output"> visual Toggle visual data mode</p>
+                        <p class="output"> backup Backup your configuration</p>
+                        <p class="output"> restore Restore from backup</p>
                     </div>
                 </div>
-
-                    // No input processing needed - terminal is now static display only
-                </script>
             </div>
+        </div>
         </div>
     </section>
 
