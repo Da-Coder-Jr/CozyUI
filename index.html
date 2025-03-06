@@ -127,15 +127,14 @@
             color: #e4e4e4;
             line-height: 1.6;
             font-size: 14px;
-            height: 450px;
-            overflow-y: auto;
+            height: auto;
+            max-height: 450px;
+            overflow: hidden;
             padding: 1.5rem;
             font-family: 'SF Mono', 'Fira Code', monospace;
             background-color: #1a1b26;
             border-radius: 10px;
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
-            scrollbar-width: thin;
-            scrollbar-color: #6c7086 #1a1b26;
             margin: 2rem auto;
             max-width: 900px;
             border: 1px solid #2f3447;
@@ -993,79 +992,28 @@
                     <div class="terminal-title">~ zsh</div>
                 </div>
                 <div class="terminal-content" id="terminal-content">
-                    <div id="command-history"></div>
-                    <div class="command-line">
-                        <span class="prompt">user@cozy</span> <span class="command">~</span> $ <input type="text" id="command-input" autofocus>
+                    <div id="command-history">
+                        <p><span class="prompt">user@cozy</span> <span class="command">~</span> $ <span class="command-text">cozyui help</span></p>
+                        <p class="output-header">CozyUI Terminal - Enhance your terminal experience</p>
+                        <p class="output">Usage: cozyui [command] [options]</p>
+                        <p class="output"></p>
+                        <p class="output">Core Commands:</p>
+                        <p class="output">  theme [name|list]       Set or list themes</p>
+                        <p class="output">  plugin [action] [name]  Manage plugins</p>
+                        <p class="output">  config                  Open configuration</p>
+                        <p class="output">  update                  Check for updates</p>
+                        <p class="output">  status                  Show CozyUI status</p>
+                        <p class="output">  help [command]          Show help for specific command</p>
+                        <p class="output"></p>
+                        <p class="output">Utility Commands:</p>
+                        <p class="output">  search                  Search command history</p>
+                        <p class="output">  visual                  Toggle visual data mode</p>
+                        <p class="output">  backup                  Backup your configuration</p>
+                        <p class="output">  restore                 Restore from backup</p>
                     </div>
                 </div>
-                <script>
-                    const commandHistory = document.getElementById('command-history');
-                    const commandInput = document.getElementById('command-input');
 
-                    function addToHistory(command, output) {
-                        const entry = document.createElement('div');
-                        entry.innerHTML = `
-                            <p><span class="prompt">user@cozy</span> <span class="command">~</span> $ <span class="command-text">${command}</span></p>
-                            ${output}
-                        `;
-                        commandHistory.appendChild(entry);
-                        commandInput.value = '';
-                        commandInput.scrollIntoView();
-                    }
-
-                    function processCommand(command) {
-                        let output = '';
-                        if (command === 'help' || command === 'cozyui help') {
-                            output = `
-                                <p class="output-header">CozyUI Terminal - Enhance your terminal experience</p>
-                                <p class="output">Usage: cozyui [command] [options]</p>
-                                <p class="output"></p>
-                                <p class="output">Core Commands:</p>
-                                <p class="output">  theme [name|list]       Set or list themes</p>
-                                <p class="output">  plugin [action] [name]  Manage plugins</p>
-                                <p class="output">  config                  Open configuration</p>
-                                <p class="output">  update                  Check for updates</p>
-                                <p class="output">  status                  Show CozyUI status</p>
-                                <p class="output">  help [command]          Show help for specific command</p>
-                                <p class="output"></p>
-                                <p class="output">Utility Commands:</p>
-                                <p class="output">  search                  Search command history</p>
-                                <p class="output">  visual                  Toggle visual data mode</p>
-                                <p class="output">  backup                  Backup your configuration</p>
-                                <p class="output">  restore                 Restore from backup</p>
-                            `;
-                        } else if (command === 'status' || command === 'cozyui status') {
-                            output = `
-                                <p class="output">CozyUI Status:</p>
-                                <p class="output">  Version: 1.0.0</p>
-                                <p class="output">  Theme: dracula</p>
-                                <p class="output">  Visual Mode: enabled</p>
-                                <p class="output">  Plugins: 3</p>
-                            `;
-                        } else if (command === 'theme list' || command === 'cozyui theme list') {
-                            output = `
-                                <p class="output">Available themes:</p>
-                                <p class="output">  dracula     - Dark theme with vibrant colors</p>
-                                <p class="output">  nord        - Arctic, north-bluish color palette</p>
-                                <p class="output">  monokai     - Dark theme with bright accents</p>
-                                <p class="output">  solarized   - Precision colors for machines and people</p>
-                            `;
-                        } else if (command === '') {
-                            return;
-                        } else {
-                            output = `<p class="output">Unknown command: ${command}</p><p class="output">Run 'cozyui help' for usage information.</p>`;
-                        }
-                        addToHistory(command, output);
-                    }
-
-                    commandInput.addEventListener('keypress', function(e) {
-                        if (e.key === 'Enter') {
-                            processCommand(this.value.trim());
-                        }
-                    });
-
-                    // Initial help command
-                    processCommand('cozyui help');
+                    // No input processing needed - terminal is now static display only
                 </script>
             </div>
         </div>
@@ -1202,7 +1150,7 @@
                         <h2 class="section-title">Easy Installation</h2>
                         <p>Get started with CozyUI in seconds with a single command:</p>
                         <div class="install-command">
-                            <code>curl -sSL https://raw.githubusercontent.com/cozyui/install/main/install.sh | bash</code>
+                            <code>curl -sSL https://raw.githubusercontent.com/Da-Coder-Jr/CozyUI/refs/heads/main/install.sh | bash</code>
                         </div>
                         <p>Works with Bash, Zsh, Fish and other popular shells.</p>
 
