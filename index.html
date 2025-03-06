@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CozyUI Terminal - Enhance Your Terminal Experience</title>
+    <style>
+        :root {
+            --primary: #6c5ce7;
+            --secondary: #a29bfe;
+            --accent: #fd79a8;
+            --background: #1e1e2e;
+            --text: #f8f9fa;
+            --card-bg: #2d2d3f;
+            --border: #4b4b63;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            background-color: var(--background);
+            color: var(--text);
+            line-height: 1.6;
+        }
+
+        header {
+            padding: 2rem 0;
+            text-align: center;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 0 2rem;
+        }
+
+        .hero {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 4rem 1rem;
+            text-align: center;
+            overflow: hidden;
+            width: 100%;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            margin: 1.5rem 0;
+            color: var(--accent);
+        }
+
+        .typewriter {
+            font-size: 2.5rem;
+            margin-bottom: 2rem;
+            position: relative;
+            background: linear-gradient(135deg, var(--accent), var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .typewriter::after {
+            content: none !important;
+            animation: none !important;
+            border: none !important;
+        }
+
+        /* Cursor animation handled in consolidated style below */
+
+        @media (max-width: 768px) {
+            .hero {
+                padding: 2rem 1rem;
+            }
+
+            .feature-grid {
+                grid-template-columns: 1fr;
+                gap: 1.5rem;
+            }
+
+            .comparison-table {
+                font-size: 0.9rem;
+                overflow-x: auto;
+                display: block;
+            }
+
+            .container {
+                padding: 0 1rem;
+            }
+
+            .typewriter {
+                font-size: 1.2rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            body {
+                font-size: 14px;
+            }
+
+            .hero h1 {
+                font-size: 1.5rem;
+            }
+
+            .ascii-art {
+                font-size: 0.7rem;
+            }
+
+            .feature-card {
+                padding: 1rem;
+            }
+
+            .typewriter {
+                font-size: 1rem;
+            }
+        }
+
+        .terminal-content {
+            color: #e4e4e4;
+            line-height: 1.6;
+            font-size: 14px;
+            height: 450px;
+            overflow-y: auto;
+            padding: 1.5rem;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+            background-color: #1a1b26;
+            border-radius: 10px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+            scrollbar-width: thin;
+            scrollbar-color: #6c7086 #1a1b26;
+            margin: 2rem auto;
+            max-width: 900px;
+            border: 1px solid #2f3447;
+            position: relative;
+        }
+
+        .terminal-content .command-text {
+            color: #50fa7b;
+        }
+
+        .terminal-content .output {
+            color: #f8f8f2;
+            margin-left: 16px;
+        }
+
+        .terminal-content .output-header {
+            color: #bd93f9;
+            margin-left: 16px;
+            font-weight: bold;
+        }
+
+        .terminal-content .output-item {
+            color: #f8f8f2;
+            margin-left: 24px;
+        }
+
+        .terminal-content .output-note {
+            color: #6272a4;
+            margin-left: 24px;
+            font-style: italic;
+        }
+
+        .terminal-content .highlight {
+            color: #ff79c6;
+        }
+
+        .terminal-content .git-branch {
+            color: #50fa7b;
+        }
+
+        .terminal-content .git-modified {
+            color: #ff5555;
+        }
+
+        .terminal-content .git-new {
+            color: #8be9fd;
+        }
+
+        .terminal-content .theme-name {
+            color: #50fa7b;
+            font-weight: bold;
+        }
+
+        .terminal-content .theme-desc {
+            color: #6272a4;
+        }
+
+        .terminal-content p {
+            margin-bottom: 8px;
+        }
+
+        .terminal-content::before {
+            content: none;
+            display: none;
+        }
+
+        .terminal-content::after {
+            content: none;
+            display: none;
+        }
+
+        .terminal-content>div {
+            margin-top: 28px;
+        }
+
+        .command-output {
+            white-space: pre-wrap;
+            word-wrap: break-word;
+            max-height: none;
+            overflow: visible;
+            margin: 8px 0;
+            padding: 4px 0;
+            color: #a9b1d6;
+        }
+
+        .prompt {
+            color: #50fa7b;
+            font-weight: 500;
+            padding-right: 8px;
+            font-family: 'SF Mono', 'Fira Code', monospace;
+        }
+
+        .feature-icon {
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            color: var(--text);
+            display: inline-block;
+        }
+
+        .ascii-art {
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            white-space: pre;
+            display: inline-block;
+            text-align: center;
+            padding: 2rem 0;
+            background: linear-gradient(45deg, #ff6b9d, #7d5fff);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+            margin: 0 auto 2rem;
+            font-size: 1.2rem;
+            line-height: 1.4;
+            width: fit-content;
+            max-width: 100%;
+            overflow-x: visible;
+            position: relative;
+            text-shadow: 0 0 5px rgba(253, 121, 168, 0.7);
+            animation: ascii-glow 2s infinite alternate;
+            letter-spacing: 0;
+            transform: none;
+            font-weight: bold;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            max-width: 800px;
+            margin-bottom: 2rem;
+            background: linear-gradient(to right, #ff6b9d, #7d5fff, #38b2ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        /* ASCII art styles moved to consolidated block below */
+
+        /* Removed duplicate typewriter style */
+
+        .hero h1 {
+            font-size: 3.8rem;
+            margin-bottom: 1.2rem;
+            background: linear-gradient(to right, #ff6b9d, #7d5fff, #38b2ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+            font-weight: 800;
+            letter-spacing: -0.5px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+            width: auto;
+            overflow: visible;
+        }
+
+        .hero h1 .typewrite {
+            display: inline-block;
+        }
+
+        /* Dynamic multi-text typewriter */
+        .multi-typewriter {
+            display: inline-block;
+            overflow: visible;
+            white-space: nowrap;
+            margin: 0;
+            letter-spacing: 0;
+            color: transparent;
+            background: linear-gradient(to right, #ff6b9d, #7d5fff, #38b2ff);
+            -webkit-background-clip: text;
+            background-clip: text;
+            font-weight: bold;
+            min-width: 1ch;
+            font-size: 3.8rem;
+            position: relative;
+            height: 4.5rem;
+            line-height: 1.2;
+            text-transform: lowercase;
+        }
+
+        .cursor {
+            display: inline-block;
+            font-weight: normal;
+            font-size: 1em;
+            width: 3px;
+            height: 1em;
+            background: linear-gradient(to bottom, #ff6b9d, #7d5fff);
+            animation: blink 1s cubic-bezier(0.68, -0.55, 0.265, 1.55) infinite;
+            opacity: 0.8;
+            position: absolute;
+            top: 50%;
+            transform: translateY(-50%);
+            border-radius: 1px;
+            box-shadow: 0 0 8px rgba(108, 92, 231, 0.5);
+            pointer-events: none;
+        }
+
+        @keyframes blink {
+
+            0%,
+            100% {
+                opacity: 1;
+            }
+
+            50% {
+                opacity: 0.2;
+            }
+        }
+
+        /* Media query fixes for small screens */
+        @media (max-width: 480px) {
+            .multi-typewriter {
+                font-size: 1rem;
+                max-width: 100%;
+            }
+        }
+
+        /* The typing effect */
+        @keyframes typing {
+            from {
+                width: 0
+            }
+
+            to {
+                width: 100%
+            }
+        }
+
+        /* The typewriter cursor effect */
+        @keyframes blink-caret {
+
+            from,
+            to {
+                border-color: #ff6b9d;
+            }
+
+            50% {
+                border-color: #7d5fff;
+            }
+        }
+
+        .hero h1 {
+            text-shadow: 3px 3px 10px rgba(0, 0, 0, 0.5),
+                0 0 20px rgba(108, 92, 231, 0.3);
+            overflow: visible;
+        }
+
+        .ascii-art {
+            font-family: 'Menlo', 'Monaco', 'Courier New', monospace;
+            white-space: pre;
+            display: inline-block;
+            text-align: center;
+            padding: 1rem 0;
+            background: linear-gradient(45deg, var(--accent), var(--primary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            color: transparent;
+            margin: 0 auto 1rem;
+            font-size: 0.9rem;
+            line-height: 1.2;
+            width: fit-content;
+            max-width: 100%;
+            overflow-x: visible;
+            position: relative;
+            text-shadow: 0 0 8px var(--accent);
+            animation: ascii-glow 2s infinite alternate;
+            letter-spacing: 0;
+            transform: none;
+            font-weight: bold;
+            tab-size: 4;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        @keyframes ascii-glow {
+            from {
+                text-shadow: 0 0 5px rgba(253, 121, 168, 0.7);
+            }
+
+            to {
+                text-shadow: 0 0 15px rgba(108, 92, 231, 0.9);
+            }
+        }
+
+        /* Blink animation already defined above */
+
+        @keyframes glow {
+            from {
+                text-shadow: 0 0 10px rgba(253, 121, 168, 0.5);
+                transform: scale(1);
+            }
+
+            to {
+                text-shadow: 0 0 20px rgba(108, 92, 231, 0.8);
+                transform: scale(1.02);
+            }
+        }
+
+        .hero p {
+            font-size: 1.25rem;
+            max-width: 800px;
+            margin-bottom: 2rem;
+        }
+
+        .cta-button {
+            display: inline-block;
+            background-color: var(--accent);
+            color: white;
+            padding: 0.8rem 2rem;
+            border-radius: 50px;
+            font-weight: bold;
+            text-decoration: none;
+            transition: transform 0.3s, box-shadow 0.3s;
+            margin: 0.5rem;
+        }
+
+        .cta-button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+        }
+
+        .cta-button.secondary {
+            background-color: transparent;
+            border: 2px solid var(--accent);
+        }
+
+        .features {
+            padding: 4rem 0;
+        }
+
+        .section-title {
+            text-align: center;
+            margin-bottom: 3rem;
+            font-size: 2.5rem;
+        }
+
+        .feature-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .feature-icon {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            color: inherit;
+            /* Use standard emoji colors */
+            display: inline-block;
+        }
+
+        .feature-card {
+            background-color: rgba(26, 27, 38, 0.8);
+            border-radius: 8px;
+            padding: 2rem;
+            margin: 1.5rem 0;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            overflow: hidden;
+            border: 1px solid rgba(0, 0, 0, 0.1);
+            position: relative;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .feature-card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+            background-color: rgba(26, 27, 38, 0.9);
+        }
+
+        .terminal-preview {
+            background-color: #1a1a2e;
+            border-radius: 10px;
+            padding: 1.5rem;
+            margin: 3rem 0;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            font-family: 'Fira Code', monospace;
+            overflow: hidden;
+        }
+
+        .terminal-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+
+        .terminal-button {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            margin-right: 6px;
+        }
+
+        .terminal-button.red {
+            background-color: #ff5f56;
+        }
+
+        .terminal-button.yellow {
+            background-color: #ffbd2e;
+        }
+
+        .terminal-button.green {
+            background-color: #27c93f;
+        }
+
+        .terminal-title {
+            color: #a9a9b3;
+            font-size: 0.8rem;
+            margin-left: 1rem;
+        }
+
+        .terminal-content {
+            color: #f8f8f2;
+            line-height: 1.5;
+        }
+
+        .prompt {
+            color: #50fa7b;
+        }
+
+        .command {
+            color: #8be9fd;
+        }
+
+        .terminal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .terminal-content::-webkit-scrollbar-track {
+            background: rgba(26, 27, 38, 0.5);
+            border-radius: 4px;
+        }
+
+        .terminal-content::-webkit-scrollbar-thumb {
+            background: rgba(108, 92, 231, 0.5);
+            border-radius: 4px;
+            border: 2px solid #1a1b26;
+        }
+
+        .terminal-content::-webkit-scrollbar-thumb:hover {
+            background: rgba(108, 92, 231, 0.7);
+        }
+
+        .terminal-content p {
+            margin: 0.5rem 0;
+            opacity: 0;
+            animation: fadeIn 0.3s ease-out forwards;
+            animation-fill-mode: both;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .testimonials {
+            padding: 4rem 0;
+            background-color: var(--card-bg);
+        }
+
+        .testimonial-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 2rem;
+        }
+
+        .testimonial-card {
+            background-color: var(--background);
+            border-radius: 10px;
+            padding: 2rem;
+            border: 1px solid var(--border);
+        }
+
+        .testimonial-text {
+            font-style: italic;
+            margin-bottom: 1.5rem;
+        }
+
+        .testimonial-author {
+            font-weight: bold;
+            color: var(--accent);
+        }
+
+        .installation {
+            padding: 4rem 0;
+            text-align: center;
+        }
+
+        .install-command {
+            background-color: var(--card-bg);
+            padding: 1rem 2rem;
+            border-radius: 5px;
+            display: inline-block;
+            margin: 1.5rem 0;
+            font-family: 'Fira Code', monospace;
+            border: 1px solid var(--border);
+        }
+
+        .themes-showcase {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 1rem;
+            margin: 2rem 0;
+        }
+
+        .theme-sample {
+            width: 100px;
+            height: 60px;
+            border-radius: 5px;
+            transition: transform 0.3s, box-shadow 0.3s;
+            position: relative;
+            cursor: pointer;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            overflow: hidden;
+        }
+
+        .theme-sample:hover {
+            transform: scale(1.1);
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+        }
+
+        .theme-sample::after {
+            content: attr(title);
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            font-size: 0.7rem;
+            padding: 2px 0;
+            text-align: center;
+            transform: translateY(100%);
+            transition: transform 0.3s;
+        }
+
+        .theme-sample:hover::after {
+            transform: translateY(0);
+        }
+
+        .nord {
+            background: linear-gradient(to right, #2e3440, #3b4252, #434c5e, #4c566a);
+        }
+
+        .dracula {
+            background: linear-gradient(to right, #282a36, #44475a, #6272a4, #8be9fd);
+        }
+
+        .monokai {
+            background: linear-gradient(to right, #272822, #3e3d31, #75715e, #f92672);
+        }
+
+        .solarized {
+            background: linear-gradient(to right, #002b36, #073642, #586e75, #cb4b16);
+        }
+
+        .gruvbox {
+            background: linear-gradient(to right, #282828, #3c3836, #504945, #cc241d);
+        }
+
+        .tokyo-night {
+            background: linear-gradient(to right, #1a1b26, #24283b, #414868, #7aa2f7);
+        }
+
+        .catppuccin {
+            background: linear-gradient(to right, #1e1e2e, #302d41, #575268, #f5c2e7);
+        }
+
+        .one-dark {
+            background: linear-gradient(to right, #282c34, #3e4451, #565c64, #61afef);
+        }
+
+        .material {
+            background: linear-gradient(to right, #263238, #37474f, #546e7a, #82aaff);
+        }
+
+        .oceanic {
+            background: linear-gradient(to right, #1b2b34, #343d46, #4f5b66, #6699cc);
+        }
+
+        .ayu {
+            background: linear-gradient(to right, #0f1419, #131721, #272d38, #f29e74);
+        }
+
+        .night-owl {
+            background: linear-gradient(to right, #011627, #0e2c4b, #1d3b53, #82aaff);
+        }
+
+        .synthwave {
+            background: linear-gradient(to right, #2b213a, #4c2a5c, #724c9d, #fe4450);
+        }
+
+        .github-dark {
+            background: linear-gradient(to right, #0d1117, #161b22, #21262d, #58a6ff);
+        }
+
+        .everforest {
+            background: linear-gradient(to right, #2d353b, #3a454a, #475258, #7fbbb3);
+        }
+
+        .rose-pine {
+            background: linear-gradient(to right, #191724, #1f1d2e, #26233a, #ebbcba);
+        }
+
+        .kanagawa {
+            background: linear-gradient(to right, #1f1f28, #2a2a37, #363646, #7e9cd8);
+        }
+
+        .horizon {
+            background: linear-gradient(to right, #1c1e26, #232530, #2e303e, #e95678);
+        }
+
+        .palenight {
+            background: linear-gradient(to right, #292d3e, #34324a, #3c435e, #c792ea);
+        }
+
+        .faq {
+            padding: 4rem 0;
+        }
+
+        .faq-item {
+            margin-bottom: 2rem;
+        }
+
+        .faq-question {
+            font-size: 1.25rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent);
+            font-weight: bold;
+        }
+
+        .faq-answer {
+            color: var(--text);
+        }
+
+        .comparison {
+            padding: 4rem 0;
+        }
+
+        .comparison-table {
+            width: 100%;
+            word-wrap: break-word;
+            white-space: normal;
+            border-collapse: collapse;
+            margin: 2rem 0;
+        }
+
+        .comparison-table th,
+        .comparison-table td {
+            padding: 1rem;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+
+        .comparison-table th {
+            background-color: var(--primary);
+        }
+
+        .comparison-table tr:nth-child(even) {
+            background-color: var(--card-bg);
+        }
+
+        .check {
+            color: #27c93f;
+        }
+
+        .cross {
+            color: #ff5f56;
+        }
+
+        footer {
+            background-color: var(--card-bg);
+            padding: 2rem 0;
+            text-align: center;
+        }
+
+        .social-links {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            margin: 1rem 0;
+        }
+
+        .social-link {
+            color: var(--text);
+            font-size: 1.5rem;
+            transition: color 0.3s;
+        }
+
+        .social-link:hover {
+            color: var(--accent);
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 {
+                font-size: 2.5rem;
+            }
+
+            .feature-grid,
+            .testimonial-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+    <link
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=Fira+Code&family=Pacifico&display=swap"
+        rel="stylesheet">
+    <script src="https://kit.fontawesome.com/a076d05399.js" crossorigin="anonymous"></script>
+    <!-- Typewriter script moved to a single implementation in the hero section -->
+</head>
+
+<body>
+    <!-- Header removed as requested -->
+    <section class="hero">
+        <div class="container">
+            <pre class="ascii-art">
+   █████████                                 █████  █████ █████
+  ███░░░░░███                               ░░███  ░░███ ░░███ 
+ ███     ░░░   ██████   █████████ █████ ████ ░███   ░███  ░███ 
+░███          ███░░███ ░█░░░░███ ░░███ ░███  ░███   ░███  ░███ 
+░███         ░███ ░███ ░   ███░   ░███ ░███  ░███   ░███  ░███ 
+░░███     ███░███ ░███   ███░   █ ░███ ░███  ░███   ░███  ░███ 
+ ░░█████████ ░░██████   █████████ ░░███████  ░░████████   █████
+  ░░░░░░░░░   ░░░░░░   ░░░░░░░░░   ░░░░░███   ░░░░░░░░   ░░░░░ 
+                                   ███ ░███                    
+                                  ░░██████                     
+                                   ░░░░░░                      
+            </pre>
+            <h1>Make Your Terminal</h1>
+            <span class="multi-typewriter" id="typing-text" style="font-size: 3.8rem; margin: 1.5rem 0;"></span>
+            <script>
+                // Typing effect configuration
+                const words = ['efficient', 'beautiful', 'productive', 'Cozy'];
+                const typingSpeedMin = 50;
+                const typingSpeedMax = 80;
+                const deleteSpeedMin = 35;
+                const deleteSpeedMax = 45;
+                const wordDelay = 1500;
+                let cycleComplete = false;
+
+                let wordIndex = 0;
+                const textElement = document.getElementById('typing-text');
+                let cursorVisible = true;
+                let cursorBlinkInterval;
+
+                // Start the typing animation
+                updateWord();
+                startCursorBlink();
+
+                function startCursorBlink() {
+                    cursorBlinkInterval = setInterval(() => {
+                        cursorVisible = !cursorVisible;
+                        updateCursor();
+                    }, 500);
+                }
+
+                function updateCursor() {
+                    const currentText = textElement.innerText.replace(/\|$/, '').trim();
+                    textElement.innerHTML = currentText + (cursorVisible ? '<span class="cursor"></span>' : '');
+                }
+
+                async function updateWord() {
+                    await new Promise(resolve => deleteText(resolve));
+                    await new Promise(resolve => typeText(resolve));
+
+                    if (wordIndex < words.length - 1) {
+                        setTimeout(() => {
+                            wordIndex++;
+                            updateWord();
+                        }, wordDelay);
+                    } else {
+                        // Keep the cursor blinking instead of clearing the interval
+                        const finalText = words[wordIndex].replace(/\s+$/, '');
+                        textElement.innerHTML = finalText + (cursorVisible ? '<span class="cursor"></span>' : '');
+                    }
+                }
+
+                function deleteText(resolve) {
+                    const currentText = textElement.innerText.replace(/\|$/, '').trim();
+                    if (currentText.length === 0) {
+                        resolve();
+                    } else {
+                        const newText = currentText.slice(0, -1);
+                        const deleteSpeed = randomBetween(deleteSpeedMin, deleteSpeedMax);
+                        textElement.innerHTML = newText + (cursorVisible ? '<span class="cursor"></span>' : '');
+                        setTimeout(() => deleteText(resolve), deleteSpeed);
+                    }
+                }
+
+                function typeText(resolve, word = words[wordIndex], charIndex = 0) {
+                    if (charIndex >= word.length) {
+                        const finalText = word.replace(/\s+$/, '').trim();
+                        textElement.innerHTML = finalText + (cursorVisible ? '<span class="cursor"></span>' : '');
+                        resolve();
+                        return;
+                    }
+                    const newText = word.substring(0, charIndex + 1).replace(/\s+$/, '').trim();
+                    const typingSpeed = randomBetween(typingSpeedMin, typingSpeedMax);
+                    textElement.innerHTML = newText + (cursorVisible ? '<span class="cursor"></span>' : '');
+                    setTimeout(() => typeText(resolve, word, charIndex + 1), typingSpeed);
+                }
+
+                function randomBetween(min, max) {
+                    return Math.random() * (max - min) + min;
+                }
+
+                // ASCII art formatting
+                document.addEventListener('DOMContentLoaded', function () {
+                    const asciiElements = document.querySelectorAll('.ascii-art');
+
+                    asciiElements.forEach(function (element) {
+                        // Get the ASCII content
+                        let content = element.innerHTML;
+
+                        // Check if it's all on one line with no breaks
+                        if (!content.includes('\n') && content.length > 100) {
+                            // This is likely a distorted ASCII art with no line breaks
+                            content = reconstructAsciiArt(content);
+                            element.innerHTML = content;
+                        }
+                    });
+                });
+
+                function reconstructAsciiArt(str) {
+                    // This is a simplified approach - adjust line length as needed
+                    const estimatedLineLength = 40; // Adjust based on your ASCII art width
+                    let result = '';
+
+                    for (let i = 0; i < str.length; i += estimatedLineLength) {
+                        result += str.slice(i, i + estimatedLineLength) + '\n';
+                    }
+
+                    return result;
+                }
+            </script>
+
+            <p>Transform your command line into a powerful, visually pleasing workspace that helps you work faster and
+                more efficiently.</p>
+            <div>
+                <a href="#installation" class="cta-button">Get Started</a>
+                <a href="#features" class="cta-button secondary">Explore Features</a>
+            </div>
+
+            <div class="terminal-preview">
+                <div class="terminal-header">
+                    <div class="terminal-button red"></div>
+                    <div class="terminal-button yellow"></div>
+                    <div class="terminal-button green"></div>
+                    <div class="terminal-title">~ zsh</div>
+                </div>
+                <div class="terminal-content" id="terminal-content">
+                    <div id="command-history"></div>
+                    <div class="command-line">
+                        <span class="prompt">user@cozy</span> <span class="command">~</span> $ <input type="text" id="command-input" autofocus>
+                    </div>
+                </div>
+                <script>
+                    const commandHistory = document.getElementById('command-history');
+                    const commandInput = document.getElementById('command-input');
+
+                    function addToHistory(command, output) {
+                        const entry = document.createElement('div');
+                        entry.innerHTML = `
+                            <p><span class="prompt">user@cozy</span> <span class="command">~</span> $ <span class="command-text">${command}</span></p>
+                            ${output}
+                        `;
+                        commandHistory.appendChild(entry);
+                        commandInput.value = '';
+                        commandInput.scrollIntoView();
+                    }
+
+                    function processCommand(command) {
+                        let output = '';
+                        if (command === 'help' || command === 'cozyui help') {
+                            output = `
+                                <p class="output-header">CozyUI Terminal - Enhance your terminal experience</p>
+                                <p class="output">Usage: cozyui [command] [options]</p>
+                                <p class="output"></p>
+                                <p class="output">Core Commands:</p>
+                                <p class="output">  theme [name|list]       Set or list themes</p>
+                                <p class="output">  plugin [action] [name]  Manage plugins</p>
+                                <p class="output">  config                  Open configuration</p>
+                                <p class="output">  update                  Check for updates</p>
+                                <p class="output">  status                  Show CozyUI status</p>
+                                <p class="output">  help [command]          Show help for specific command</p>
+                                <p class="output"></p>
+                                <p class="output">Utility Commands:</p>
+                                <p class="output">  search                  Search command history</p>
+                                <p class="output">  visual                  Toggle visual data mode</p>
+                                <p class="output">  backup                  Backup your configuration</p>
+                                <p class="output">  restore                 Restore from backup</p>
+                            `;
+                        } else if (command === 'status' || command === 'cozyui status') {
+                            output = `
+                                <p class="output">CozyUI Status:</p>
+                                <p class="output">  Version: 1.0.0</p>
+                                <p class="output">  Theme: dracula</p>
+                                <p class="output">  Visual Mode: enabled</p>
+                                <p class="output">  Plugins: 3</p>
+                            `;
+                        } else if (command === 'theme list' || command === 'cozyui theme list') {
+                            output = `
+                                <p class="output">Available themes:</p>
+                                <p class="output">  dracula     - Dark theme with vibrant colors</p>
+                                <p class="output">  nord        - Arctic, north-bluish color palette</p>
+                                <p class="output">  monokai     - Dark theme with bright accents</p>
+                                <p class="output">  solarized   - Precision colors for machines and people</p>
+                            `;
+                        } else if (command === '') {
+                            return;
+                        } else {
+                            output = `<p class="output">Unknown command: ${command}</p><p class="output">Run 'cozyui help' for usage information.</p>`;
+                        }
+                        addToHistory(command, output);
+                    }
+
+                    commandInput.addEventListener('keypress', function(e) {
+                        if (e.key === 'Enter') {
+                            processCommand(this.value.trim());
+                        }
+                    });
+
+                    // Initial help command
+                    processCommand('cozyui help');
+                </script>
+            </div>
+        </div>
+    </section>
+
+    <section id="features" class="features">
+        <div class="container">
+            <h2 class="section-title">Features</h2>
+            <p class="section-subtitle" style="text-align: center; margin-bottom: 2rem;">Everything you need to
+                transform your terminal experience</p>
+
+            <div class="feature-grid">
+                <div class="feature-card">
+                    <div class="feature-icon">🎨</div>
+                    <h3 class="feature-title">Beautiful Themes</h3>
+                    <div class="feature-divider"></div>
+                    <p>Over 30 carefully crafted color schemes including Nord, Dracula, Monokai, and Solarized. All
+                        designed to reduce eye strain during long terminal sessions.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">⚡</div>
+                    <h3 class="feature-title">Smart Prompts</h3>
+                    <div class="feature-divider"></div>
+                    <p>Context-aware prompts show git status, virtual environments, and execution time. Know exactly
+                        where you are and what's happening.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔍</div>
+                    <h3 class="feature-title">Enhanced Search</h3>
+                    <div class="feature-divider"></div>
+                    <p>Find commands from your history with fuzzy search. Never type the same long command twice.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">📈</div>
+                    <h3 class="feature-title">Visual Data</h3>
+                    <div class="feature-divider"></div>
+                    <p>See file sizes, directory trees, and command output with visual representations right in your
+                        terminal.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">⌨️</div>
+                    <h3 class="feature-title">Keyboard Shortcuts</h3>
+                    <p>Customizable shortcuts for common operations. Navigate and edit your command line efficiently.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🧩</div>
+                    <h3 class="feature-title">Plugin System</h3>
+                    <p>Extend functionality with plugins for language-specific tools, cloud providers, and more.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🚀</div>
+                    <h3 class="feature-title">Performance Boost</h3>
+                    <p>Optimized for speed with minimal resource usage. CozyUI makes your terminal faster, not slower.
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🔄</div>
+                    <h3 class="feature-title">Auto-Updates</h3>
+                    <p>Stay current with automatic updates that bring new features and security patches without
+                        disrupting your workflow.</p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon">🌐</div>
+                    <h3 class="feature-title">Cross-Platform</h3>
+                    <p>Works seamlessly across macOS, Linux, and Windows. Your terminal experience stays consistent no
+                        matter where you work.</p>
+                </div>
+
+            </div>
+
+            <div style="margin-top: 4rem; text-align: center;">
+                <h2 class="section-title">Customization</h2>
+                <p style="max-width: 800px; margin: 0 auto 3rem; font-size: 1.2rem;">Make your terminal experience
+                    uniquely yours with our extensive customization options</p>
+
+                <div class="feature-grid">
+                    <div class="feature-card">
+                        <div class="feature-icon">🛠️</div>
+                        <h3 class="feature-title">Configuration Studio</h3>
+                        <p>Tailor every aspect of your terminal with our visual configuration studio. Adjust colors,
+                            prompts, shortcuts, and more through an intuitive interface.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">🧰</div>
+                        <h3 class="feature-title">Add-on Marketplace</h3>
+                        <p>Extend functionality with hundreds of community-created add-ons. Browse, install, and manage
+                            extensions through our integrated marketplace.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">🔌</div>
+                        <h3 class="feature-title">Plugin Development Kit</h3>
+                        <p>Create your own plugins with our comprehensive development kit. Full documentation and
+                            templates make it easy to extend CozyUI's capabilities.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">🌈</div>
+                        <h3 class="feature-title">Animation Effects</h3>
+                        <p>Add subtle animations and transitions to your terminal. Choose from various effects like
+                            typing, fading, or particle animations for command execution.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">🎭</div>
+                        <h3 class="feature-title">Theme Creator</h3>
+                        <p>Design your own themes with our interactive color palette tool. Preview changes in real-time
+                            and share your creations with the community.</p>
+                    </div>
+
+                    <div class="feature-card">
+                        <div class="feature-icon">📋</div>
+                        <h3 class="feature-title">Profile Presets</h3>
+                        <p>Create and switch between different terminal profiles for various workflows. Set up dedicated
+                            environments for development, system administration, or data analysis.</p>
+                    </div>
+                </div>
+            </div>
+
+            <section id="installation" class="installation">
+
+                <section id="installation" class="installation">
+                    <div class="container">
+                        <h2 class="section-title">Easy Installation</h2>
+                        <p>Get started with CozyUI in seconds with a single command:</p>
+                        <div class="install-command">
+                            <code>curl -sSL https://raw.githubusercontent.com/cozyui/install/main/install.sh | bash</code>
+                        </div>
+                        <p>Works with Bash, Zsh, Fish and other popular shells.</p>
+
+                        <h3 style="margin-top: 3rem; margin-bottom: 1.5rem;">Available Themes</h3>
+                        <div class="theme-list"
+                            style="max-width: 800px; margin: 0 auto; text-align: left; background-color: var(--card-bg); padding: 2rem; border-radius: 10px; border: 1px solid var(--border);">
+                            <p style="margin-bottom: 1rem;">Our 2025 collection includes over 30 professionally designed
+                                themes:</p>
+                            <ul style="list-style-type: none; color: var(--text);">
+                                <li>• Nord</li>
+                                <li>• Ayu Dark</li>
+                                <li>• Quantum</li>
+                                <li>• Dracula</li>
+                                <li>• Night Owl</li>
+                                <li>• Arctic Frost</li>
+                                <li>• Monokai</li>
+                                <li>• Synthwave</li>
+                                <li>• Cyber Neon</li>
+                                <li>• Solarized</li>
+                                <li>• GitHub Dark</li>
+                                <li>• Obsidian</li>
+                                <li>• Gruvbox</li>
+                                <li>• Everforest</li>
+                                <li>• Moonlight</li>
+                                <li>• Tokyo Night</li>
+                                <li>• Rose Pine</li>
+                                <li>• Emerald</li>
+                                <li>• Catppuccin</li>
+                                <li>• Kanagawa</li>
+                                <li>• Crimson</li>
+                                <li>• One Dark</li>
+                                <li>• Horizon</li>
+                                <li>• Glacier</li>
+                                <li>• Material</li>
+                                <li>• Palenight</li>
+                                <li>• Sunset</li>
+                                <li>• Oceanic Next</li>
+                                <li>• Nebula</li>
+                                <li>• Void</li>
+                            </ul>
+                            <p style="margin-top: 1.5rem;">New themes are added monthly based on community feedback and
+                                design trends.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="faq">
+                    <div class="container">
+                        <h2 class="section-title">Frequently Asked Questions</h2>
+
+                        <div class="faq-item">
+                            <p class="faq-question">Will CozyUI slow down my terminal?</p>
+                            <p class="faq-answer">Not at all! CozyUI is designed with performance in mind. It's
+                                lightweight and optimized to add features without compromising speed.</p>
+                        </div>
+
+                        <div class="faq-item">
+                            <p class="faq-question">Is CozyUI compatible with my terminal emulator?</p>
+                            <p class="faq-answer">CozyUI works with most popular terminal emulators including iTerm2,
+                                Terminal.app, Windows Terminal, GNOME Terminal, Alacritty, and many more.</p>
+                        </div>
+
+                        <div class="faq-item">
+                            <p class="faq-question">Can I customize CozyUI to match my workflow?</p>
+                            <p class="faq-answer">Absolutely! CozyUI is highly customizable through simple configuration
+                                files. You can adjust colors, prompts, shortcuts, and more to suit your preferences.</p>
+                        </div>
+
+                        <div class="faq-item">
+                            <p class="faq-question">How often is CozyUI updated?</p>
+                            <p class="faq-answer">We release updates monthly with new features and improvements.
+                                Security patches are released as needed. The auto-update feature ensures you always have
+                                the latest version.</p>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="comparison">
+                    <div class="container">
+                        <h2 class="section-title">How CozyUI Compares</h2>
+
+                        <table class="comparison-table">
+                            <thead>
+                                <tr>
+                                    <th>Feature</th>
+                                    <th>CozyUI</th>
+                                    <th>Standard Terminal</th>
+                                    <th style="min-width: 180px;">Other Customizations</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr>
+                                    <td>Beautiful Themes</td>
+                                    <td><span class="check">✓</span></td>
+                                    <td><span class="cross">✗</span></td>
+                                    <td><span class="check">✓</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Smart Prompts</td>
+                                    <td><span class="check">✓</span></td>
+                                    <td><span class="cross">✗</span></td>
+                                    <td><span class="check">✓</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Enhanced Search</td>
+                                    <td><span class="check">✓</span></td>
+                                    <td><span class="cross">✗</span></td>
+                                    <td><span class="cross">✗</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Visual Data</td>
+                                    <td><span class="check">✓</span></td>
+                                    <td><span class="cross">✗</span></td>
+                                    <td><span class="cross">✗</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Easy Installation</td>
+                                    <td><span class="check">✓</span></td>
+                                    <td><span class="check">✓</span></td>
+                                    <td><span class="cross">✗</span></td>
+                                </tr>
+                                <tr>
+                                    <td>Performance Optimized</td>
+                                    <td><span class="check">✓</span></td>
+                                    <td><span class="check">✓</span></td>
+                                    <td><span class="cross">✗</span></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </section>
+
+                <section id="addons" class="features" style="background-color: var(--card-bg);">
+                    <div class="container">
+                        <h2 class="section-title" style="color: var(--accent);">ADD-ONS</h2>
+                        <p style="text-align: center; margin-bottom: 3rem; font-size: 1.2rem;">Supercharge your terminal
+                            with these powerful extensions</p>
+
+                        <div class="feature-grid">
+                            <div class="feature-card">
+                                <div class="feature-icon">📊</div>
+                                <h3 class="feature-title">System Monitor</h3>
+                                <p>Real-time system statistics displayed right in your terminal. Monitor CPU, memory,
+                                    disk usage, and network activity without switching contexts.</p>
+                            </div>
+
+                            <div class="feature-card">
+                                <div class="feature-icon">🔔</div>
+                                <h3 class="feature-title">Notification Center</h3>
+                                <p>Get notified when long-running commands complete. Integrates with your OS
+                                    notification system to keep you informed even when your terminal isn't in focus.</p>
+                            </div>
+
+                            <div class="feature-card">
+                                <div class="feature-icon">🌤️</div>
+                                <h3 class="feature-title">Weather Widget</h3>
+                                <p>Check the current weather and forecast without leaving your terminal. Customizable to
+                                    show in your prompt or on demand.</p>
+                            </div>
+
+                            <div class="feature-card">
+                                <div class="feature-icon">📝</div>
+                                <h3 class="feature-title">Note Taking</h3>
+                                <p>Quick notes and snippets that sync across all your devices. Perfect for command
+                                    snippets you want to remember or project-specific notes.</p>
+                            </div>
+
+                            <div class="feature-card">
+                                <div class="feature-icon">🔄</div>
+                                <h3 class="feature-title">Git Enhancer</h3>
+                                <p>Advanced git integration with visual branch displays, conflict resolution tools, and
+                                    commit previews right in your terminal.</p>
+                            </div>
+
+                            <div class="feature-card">
+                                <div class="feature-icon">🔍</div>
+                                <h3 class="feature-title">Code Search</h3>
+                                <p>Powerful code search capabilities with syntax highlighting and preview. Find what
+                                    you're looking for faster than ever.</p>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+
+                <section class="cta">
+                    <div class="container" style="text-align: center; padding: 4rem 0;">
+                        <h2 class="section-title">Ready to Transform Your Terminal?</h2>
+                        <p style="max-width: 600px; margin: 0 auto 2rem;">Join thousands of developers who have enhanced
+                            their terminal experience with CozyUI.</p>
+                        <a href="#installation" class="cta-button">Get Started Now</a>
+                    </div>
+                </section>
+
+                <footer>
+                    <div class="container">
+                        <p>© 2025 CozyUI Terminal. All rights reserved.</p>
+                        <div class="social-links">
+                            <a href="#" class="social-link"><i class="fab fa-github"></i></a>
+                            <a href="#" class="social-link"><i class="fab fa-twitter"></i></a>
+                            <a href="#" class="social-link"><i class="fab fa-discord"></i></a>
+                        </div>
+                        <p style="margin-top: 1rem; font-size: 0.9rem;">Made with love</p>
+                    </div>
+                </footer>
+                <script>
+                    // Terminal command handling
+                    const terminalContent = document.querySelector('.terminal-content');
+                    const commands = {
+                        'theme': handleThemeCommand,
+                        'git': handleGitCommand,
+                        'status': handleStatusCommand,
+                        'help': handleHelpCommand,
+                        'plugin': handlePluginCommand,
+                        'config': handleConfigCommand,
+                        'visual': handleVisualCommand
+                    };
+
+                    function addTerminalLine(content, type = 'command') {
+                        const p = document.createElement('p');
+                        if (type === 'command') {
+                            p.innerHTML = `<span class="prompt">user@cozy</span> <span class="command">~</span> $ <span class="command-text">${content}</span>`;
+                        } else {
+                            p.className = type;
+                            p.innerHTML = content;
+                        }
+                        terminalContent.appendChild(p);
+                        terminalContent.scrollTop = terminalContent.scrollHeight;
+                    }
+
+                    function handleCommand(cmd) {
+                        const args = cmd.split(' ');
+                        const command = args[0];
+                        if (commands[command]) {
+                            commands[command](args.slice(1));
+                        } else {
+                            addTerminalLine(`Unknown command: ${command}\nRun 'cozyui help' for usage information.`, 'output');
+                        }
+                    }
+
+                    function handleThemeCommand(args) {
+                        if (!args.length || args[0] === 'list') {
+                            addTerminalLine('Available themes:', 'output-header');
+                            addTerminalLine('• <span class="theme-name">dracula</span> <span class="theme-desc">A dark theme with vibrant colors</span>', 'output-item');
+                            addTerminalLine('• <span class="theme-name">monokai</span> <span class="theme-desc">A classic dark theme for coding</span>', 'output-item');
+                            addTerminalLine('Use "cozyui theme <name>" to apply a theme', 'output-note');
+                        } else {
+                            addTerminalLine(`Theme '${args[0]}' applied successfully.`, 'output');
+                        }
+                    }
+
+                    function handleStatusCommand() {
+                        addTerminalLine('CozyUI Status:', 'output-header');
+                        addTerminalLine('Version: <span class="highlight">1.0.0</span>', 'output-item');
+                        addTerminalLine('Theme: <span class="highlight">dracula</span>', 'output-item');
+                        addTerminalLine('Visual Mode: <span class="highlight">enabled</span>', 'output-item');
+                        addTerminalLine('Plugins: <span class="highlight">0</span>', 'output-item');
+                    }
+
+                    function handleGitCommand() {
+                        addTerminalLine('<span class
+</body >
+
+</html >
