@@ -17,16 +17,17 @@ RESET="\033[0m"
 # ASCII Art Logo
 echo -e "${CYAN}"
 cat << "EOF"
-█████████                                 █████  █████ █████
-███░░░░░███                               ░░███  ░░███ ░░███
-███     ░░░   ██████   █████████ █████ ████ ░███   ░███  ░███
-░███          ███░░███ ░█░░░░███ ░░███ ░███  ░███   ░███  ░███
-░███         ░███ ░███ ░   ███░   ░███ ░███  ░███   ░███  ░███
-░░███     ███░███ ░███   ███░   █ ░███ ░███  ░███   ░███  ░███
-░░█████████ ░░██████   █████████ ░░███████  ░░████████   █████
-░░░░░░░░░   ░░░░░░   ░░░░░░░░░   ░░░░░███   ░░░░░░░░   ░░░░░
-                                    ███ ░███                    
-                                   ░░██████
+   █████████                                █████  █████ █████
+  ███░░░░░███                               ░░███  ░░███ ░░███ 
+ ███     ░░░   ██████   █████████ █████ ████ ░███   ░███  ░███ 
+░███          ███░░███ ░█░░░░███ ░░███ ░███  ░███   ░███  ░███ 
+░███         ░███ ░███ ░   ███░   ░███ ░███  ░███   ░███  ░███ 
+░░███     ███░███ ░███   ███░   █ ░███ ░███  ░███   ░███  ░███ 
+ ░░█████████ ░░██████   █████████ ░░███████  ░░████████   █████
+  ░░░░░░░░░   ░░░░░░   ░░░░░░░░░   ░░░░░███   ░░░░░░░░   ░░░░░ 
+                                   ███ ░███                    
+                                  ░░██████                     
+                                   ░░░░░░       
 EOF
 echo -e "${RESET}"
 
@@ -44,7 +45,7 @@ display_progress() {
     local pid=$1
     local delay=0.1
     local spinstr='|/-\'
-    while [ "$(ps a | awk '{print $1}' | grep -w $pid)" ]; do
+    while ps -p $pid > /dev/null 2>&1; do
         local temp=${spinstr#?}
         printf " [%c]  " "$spinstr"
         local spinstr=$temp${spinstr%"$temp"}
@@ -166,21 +167,32 @@ fi
 COZYUI_DIR="$HOME/.cozyui"
 display_step "Creating installation directory at $COZYUI_DIR"
 
-if [ -d "$COZYUI_DIR" ]; then
-    display_warning "CozyUI directory already exists. Backing up..."
-    mv "$COZYUI_DIR" "${COZYUI_DIR}.backup.$(date +%s)"
-    display_success "Backup created"
+# Check if we have write permission to HOME directory
+if [ ! -w "$HOME" ]; then
+    display_error "No write permission in home directory"
 fi
 
-mkdir -p "$COZYUI_DIR"
+if [ -d "$COZYUI_DIR" ]; then
+    display_warning "CozyUI directory already exists. Backing up..."
+    backup_dir="${COZYUI_DIR}.backup.$(date +%s)"
+    if ! mv "$COZYUI_DIR" "$backup_dir"; then
+        display_error "Failed to create backup directory"
+    fi
+    display_success "Backup created at $backup_dir"
+fi
+
+if ! mkdir -p "$COZYUI_DIR"; then
+    display_error "Failed to create installation directory"
+fi
 display_success "Installation directory created"
 
 # Create subdirectories
-mkdir -p "$COZYUI_DIR/themes"
-mkdir -p "$COZYUI_DIR/plugins"
-mkdir -p "$COZYUI_DIR/config"
-mkdir -p "$COZYUI_DIR/bin"
-mkdir -p "$COZYUI_DIR/cache"
+for dir in "themes" "plugins" "config" "bin" "cache" "data" "docs"; do
+    if ! mkdir -p "$COZYUI_DIR/$dir"; then
+        display_error "Failed to create $dir directory"
+    fi
+done
+display_success "Created all required directories"
 
 # Download core files
 display_step "Downloading CozyUI core files"
@@ -1049,6 +1061,11 @@ display_step "Creating sample plugins"
 
 # Create Git Enhancer plugin
 mkdir -p "$COZYUI_DIR/plugins/git-enhancer"
+mkdir -p "$COZYUI_DIR/plugins/system-monitor"
+mkdir -p "$COZYUI_DIR/plugins/weather-widget"
+mkdir -p "$COZYUI_DIR/plugins/productivity-tools"
+mkdir -p "$COZYUI_DIR/plugins/code-snippets"
+mkdir -p "$COZYUI_DIR/plugins/task-manager"
 cat > "$COZYUI_DIR/plugins/git-enhancer/git-enhancer.sh" << 'EOL'
 #!/bin/bash
 
@@ -1269,21 +1286,713 @@ alias weather="get_weather"
 alias forecast="get_weather_forecast"
 EOL
 
-# Create shell integration
-display_step "Setting up shell integration"
+# Create Productivity Tools plugin
+cat > "$COZYUI_DIR/plugins/productivity-tools/productivity-tools.sh" << 'EOL'
+#!/bin/bash
+
+# Productivity Tools plugin for CozyUI
+
+# Task management functions
+TASK_FILE="$HOME/.cozyui/data/tasks.txt"
+
+# Ensure task file exists
+if [ ! -f "$TASK_FILE" ]; then
+    mkdir -p "$(dirname "$TASK_FILE")"
+    touch "$TASK_FILE"
+fi
+
+# Function to list all tasks
+list_tasks() {
+    echo -e "\033[1;34m=== Task List ===\033[0m"
+    
+    if [ ! -s "$TASK_FILE" ]; then
+        echo "No tasks found. Add tasks with 'task add <description>'"
+        return 0
+    fi
+    
+    local line_num=1
+    while IFS= read -r task; do
+        local status="\033[1;31m☐\033[0m"
+        local task_text="$task"
+        
+        # Check if task is marked as done
+        if [[ "$task" == "[x]"* ]]; then
+            status="\033[1;32m☑\033[0m"
+            task_text="${task#[x] }"
+        elif [[ "$task" == "[ ]"* ]]; then
+            task_text="${task#[ ] }"
+        fi
+        
+        echo -e "$line_num. $status $task_text"
+        line_num=$((line_num + 1))
+    done < "$TASK_FILE"
+}
+
+# Function to add a new task
+add_task() {
+    if [ -z "$1" ]; then
+        echo "Usage: task add <description>"
+        return 1
+    fi
+    
+    echo "[ ] $*" >> "$TASK_FILE"
+    echo -e "\033[1;32mTask added:\033[0m $*"
+}
+
+# Function to mark a task as done
+mark_task_done() {
+    if [ -z "$1" ] || ! [[ "$1" =~ ^[0-9]+$ ]]; then
+        echo "Usage: task done <task_number>"
+        return 1
+    fi
+    
+    local task_num=$1
+    local line_count=$(wc -l < "$TASK_FILE")
+    
+    if [ "$task_num" -gt "$line_count" ] || [ "$task_num" -lt 1 ]; then
+        echo "Error: Task number out of range"
+        return 1
+    fi
+    
+    local temp_file="$(mktemp)"
+    local line_num=1
+    
+    while IFS= read -r task; do
+        if [ "$line_num" -eq "$task_num" ]; then
+            # Check if already marked as done
+            if [[ "$task" == "[x]"* ]]; then
+                echo "Task already marked as done"
+                rm "$temp_file"
+                return 0
+            fi
+            
+            # Remove existing status if any
+            if [[ "$task" == "[ ]"* ]]; then
+                task="${task#[ ] }"
+            fi
+            
+            echo "[x] $task" >> "$temp_file"
+            echo -e "\033[1;32mMarked task as done:\033[0m $task"
+        else
+            echo "$task" >> "$temp_file"
+        fi
+        line_num=$((line_num + 1))
+    done < "$TASK_FILE"
+    
+    mv "$temp_file" "$TASK_FILE"
+}
+
+# Function to remove a task
+remove_task() {
+    if [ -z "$1" ] || ! [[ "$1" =~ ^[0-9]+$ ]]; then
+        echo "Usage: task remove <task_number>"
+        return 1
+    fi
+    
+    local task_num=$1
+    local line_count=$(wc -l < "$TASK_FILE")
+    
+    if [ "$task_num" -gt "$line_count" ] || [ "$task_num" -lt 1 ]; then
+        echo "Error: Task number out of range"
+        return 1
+    fi
+    
+    local temp_file="$(mktemp)"
+    local line_num=1
+    local removed_task=""
+    
+    while IFS= read -r task; do
+        if [ "$line_num" -eq "$task_num" ]; then
+            removed_task="$task"
+        else
+            echo "$task" >> "$temp_file"
+        fi
+        line_num=$((line_num + 1))
+    done < "$TASK_FILE"
+    
+    mv "$temp_file" "$TASK_FILE"
+    echo -e "\033[1;31mRemoved task:\033[0m $removed_task"
+}
+
+# Pomodoro timer function
+pomodoro() {
+    local work_time=${1:-25}
+    local break_time=${2:-5}
+    local cycles=${3:-4}
+    
+    echo -e "\033[1;34m=== Pomodoro Timer ===\033[0m"
+    echo "Starting $cycles pomodoro cycles of $work_time minutes work and $break_time minutes break"
+    
+    for ((i=1; i<=cycles; i++)); do
+        echo -e "\033[1;32mCycle $i/$cycles - Work time ($work_time minutes)\033[0m"
+        echo "Press Ctrl+C to exit"
+        
+        # Convert minutes to seconds
+        local work_seconds=$((work_time * 60))
+        local start_time=$(date +%s)
+        local end_time=$((start_time + work_seconds))
+        
+        while [ $(date +%s) -lt $end_time ]; do
+            local remaining=$((end_time - $(date +%s)))
+            local mins=$((remaining / 60))
+            local secs=$((remaining % 60))
+            printf "\rRemaining: %02d:%02d" $mins $secs
+            sleep 1
+        done
+        
+        echo -e "\n\a\033[1;33mWork time finished! Take a break.\033[0m"
+        
+        if [ "$i" -lt "$cycles" ]; then
+            echo -e "\033[1;36mBreak time ($break_time minutes)\033[0m"
+            
+            # Convert minutes to seconds
+            local break_seconds=$((break_time * 60))
+            local start_time=$(date +%s)
+            local end_time=$((start_time + break_seconds))
+            
+            while [ $(date +%s) -lt $end_time ]; do
+                local remaining=$((end_time - $(date +%s)))
+                local mins=$((remaining / 60))
+                local secs=$((remaining % 60))
+                printf "\rRemaining: %02d:%02d" $mins $secs
+                sleep 1
+            done
+            
+            echo -e "\n\a\033[1;32mBreak time finished! Back to work.\033[0m"
+        fi
+    done
+    
+    echo -e "\033[1;34mPomodoro session completed!\033[0m"
+}
+
+# Quick note function
+quick_note() {
+    local note_dir="$HOME/.cozyui/data/notes"
+    local note_file="$note_dir/$(date +%Y-%m-%d).md"
+    
+    # Ensure notes directory exists
+    mkdir -p "$note_dir"
+    
+    if [ -z "$1" ]; then
+        # No arguments, open the note file in editor
+        if command -v "$EDITOR" >/dev/null 2>&1; then
+            "$EDITOR" "$note_file"
+        elif command -v nano >/dev/null 2>&1; then
+            nano "$note_file"
+        elif command -v vim >/dev/null 2>&1; then
+            vim "$note_file"
+        else
+            echo "No suitable editor found. Please set the EDITOR environment variable."
+            return 1
+        fi
+    else
+        # Add timestamp and note to file
+        echo "$(date +%H:%M) - $*" >> "$note_file"
+        echo -e "\033[1;32mNote added:\033[0m $*"
+    fi
+}
+
+# Register commands
+alias tasks="list_tasks"
+alias task_add="add_task"
+alias task_done="mark_task_done"
+alias task_remove="remove_task"
+alias pomo="pomodoro"
+alias note="quick_note"
+EOL
+
+# Create Code Snippets plugin
+cat > "$COZYUI_DIR/plugins/code-snippets/code-snippets.sh" << 'EOL'
+#!/bin/bash
+
+# Code Snippets plugin for CozyUI
+
+# Snippets directory
+SNIPPETS_DIR="$HOME/.cozyui/data/snippets"
+
+# Ensure snippets directory exists
+if [ ! -d "$SNIPPETS_DIR" ]; then
+    mkdir -p "$SNIPPETS_DIR"
+fi
+
+# Function to list all snippets
+list_snippets() {
+    echo -e "\033[1;34m=== Code Snippets ===\033[0m"
+    
+    if [ -z "$(ls -A "$SNIPPETS_DIR" 2>/dev/null)" ]; then
+        echo "No snippets found. Add snippets with 'snippet add <name>'"
+        return 0
+    fi
+    
+    for snippet in "$SNIPPETS_DIR"/*; do
+        local name=$(basename "$snippet")
+        local lang=$(head -n 1 "$snippet" | grep -o '^# Language: .*' | sed 's/# Language: //')
+        local desc=$(head -n 2 "$snippet" | tail -n 1 | grep -o '^# Description: .*' | sed 's/# Description: //')
+        
+        if [ -z "$lang" ]; then
+            lang="unknown"
+        fi
+        
+        if [ -z "$desc" ]; then
+            desc="No description"
+        fi
+        
+        echo -e "\033[1;32m$name\033[0m (\033[1;33m$lang\033[0m) - $desc"
+    done
+}
+
+# Function to add a new snippet
+add_snippet() {
+    if [ -z "$1" ]; then
+        echo "Usage: snippet add <name>"
+        return 1
+    fi
+    
+    local name=$1
+    local snippet_file="$SNIPPETS_DIR/$name"
+    
+    if [ -f "$snippet_file" ]; then
+        echo -e "\033[1;31mError:\033[0m Snippet '$name' already exists"
+        echo "Use 'snippet edit $name' to modify it"
+        return 1
+    fi
+    
+    # Create snippet file with template
+    cat > "$snippet_file" << EOF
+# Language: 
+# Description: 
+
+# Your code snippet here
+EOF
+    
+    # Open in editor
+    if command -v "$EDITOR" >/dev/null 2>&1; then
+        "$EDITOR" "$snippet_file"
+    elif command -v nano >/dev/null 2>&1; then
+        nano "$snippet_file"
+    elif command -v vim >/dev/null 2>&1; then
+        vim "$snippet_file"
+    else
+        echo "No suitable editor found. Please edit $snippet_file manually."
+    fi
+    
+    echo -e "\033[1;32mSnippet created:\033[0m $name"
+}
+
+# Function to view a snippet
+view_snippet() {
+    if [ -z "$1" ]; then
+        echo "Usage: snippet view <name>"
+        return 1
+    fi
+    
+    local name=$1
+    local snippet_file="$SNIPPETS_DIR/$name"
+    
+    if [ ! -f "$snippet_file" ]; then
+        echo -e "\033[1;31mError:\033[0m Snippet '$name' not found"
+        return 1
+    fi
+    
+    echo -e "\033[1;34m=== Snippet: $name ===\033[0m"
+    cat "$snippet_file"
+}
+
+# Function to edit a snippet
+edit_snippet() {
+    if [ -z "$1" ]; then
+        echo "Usage: snippet edit <name>"
+        return 1
+    fi
+    
+    local name=$1
+    local snippet_file="$SNIPPETS_DIR/$name"
+    
+    if [ ! -f "$snippet_file" ]; then
+        echo -e "\033[1;31mError:\033[0m Snippet '$name' not found"
+        return 1
+    fi
+    
+    # Open in editor
+    if command -v "$EDITOR" >/dev/null 2>&1; then
+        "$EDITOR" "$snippet_file"
+    elif command -v nano >/dev/null 2>&1; then
+        nano "$snippet_file"
+    elif command -v vim >/dev/null 2>&1; then
+        vim "$snippet_file"
+    else
+        echo "No suitable editor found. Please edit $snippet_file manually."
+    fi
+    
+    echo -e "\033[1;32mSnippet updated:\033[0m $name"
+}
+
+# Function to delete a snippet
+delete_snippet() {
+    if [ -z "$1" ]; then
+        echo "Usage: snippet delete <name>"
+        return 1
+    fi
+    
+    local name=$1
+    local snippet_file="$SNIPPETS_DIR/$name"
+    
+    if [ ! -f "$snippet_file" ]; then
+        echo -e "\033[1;31mError:\033[0m Snippet '$name' not found"
+        return 1
+    fi
+    
+    rm "$snippet_file"
+    echo -e "\033[1;31mSnippet deleted:\033[0m $name"
+}
+
+# Function to copy a snippet to clipboard
+copy_snippet() {
+    if [ -z "$1" ]; then
+        echo "Usage: snippet copy <name>"
+        return 1
+    fi
+    
+    local name=$1
+    local snippet_file="$SNIPPETS_DIR/$name"
+    
+    if [ ! -f "$snippet_file" ]; then
+        echo -e "\033[1;31mError:\033[0m Snippet '$name' not found"
+        return 1
+    fi
+    
+    # Skip the first two lines (metadata) and copy to clipboard
+    if command -v pbcopy >/dev/null 2>&1; then
+        # macOS
+        tail -n +3 "$snippet_file" | pbcopy
+    elif command -v xclip >/dev/null 2>&1; then
+        # Linux with X11
+        tail -n +3 "$snippet_file" | xclip -selection clipboard
+    elif command -v xsel >/dev/null 2>&1; then
+        # Alternative for Linux
+        tail -n +3 "$snippet_file" | xsel -ib
+    else
+        echo -e "\033[1;31mError:\033[0m No clipboard command found"
+        echo "Please install pbcopy (macOS), xclip, or xsel (Linux)"
+        return 1
+    fi
+    
+    echo -e "\033[1;32mSnippet copied to clipboard:\033[0m $name"
+}
+
+# Function to add tags to a snippet
+tag_snippet() {
+    if [ -z "$1" ] || [ -z "$2" ]; then
+        echo "Usage: snippet tag <name> <tag1,tag2,...>"
+        return 1
+    fi
+    
+    local name=$1
+    local tags=$2
+    local snippet_file="$SNIPPETS_DIR/$name"
+    
+    if [ ! -f "$snippet_file" ]; then
+        echo -e "\033[1;31mError:\033[0m Snippet '$name' not found"
+        return 1
+    fi
+    
+    # Check if tags line already exists
+    if grep -q "^# Tags: " "$snippet_file"; then
+        # Update existing tags line
+        sed -i '' "s/^# Tags: .*$/# Tags: $tags/" "$snippet_file"
+    else
+        # Add tags line after description
+        local temp_file="$(mktemp)"
+        awk 'NR==2{print; print "# Tags: '$tags'"; next}1' "$snippet_file" > "$temp_file"
+        mv "$temp_file" "$snippet_file"
+    fi
+    
+    echo -e "\033[1;32mTags added to snippet:\033[0m $name"
+    echo -e "\033[1;33mTags:\033[0m $tags"
+}
+
+# Function to search snippets by tag
+search_snippets() {
+    if [ -z "$1" ]; then
+        echo "Usage: snippet search <tag>"
+        return 1
+    fi
+    
+    local search_tag=$1
+    local found=false
+    
+    echo -e "\033[1;34m=== Snippets with tag: $search_tag ===\033[0m"
+    
+    for snippet in "$SNIPPETS_DIR"/*; do
+        if [ -f "$snippet" ]; then
+            local name=$(basename "$snippet")
+            local tags=$(grep -o '^# Tags: .*' "$snippet" | sed 's/# Tags: //')
+            
+            # Check if the search tag is in the tags list
+            if [[ ",$tags," == *",$search_tag,"* ]] || [[ "$tags" == "$search_tag" ]]; then
+                local lang=$(head -n 1 "$snippet" | grep -o '^# Language: .*' | sed 's/# Language: //')
+                local desc=$(head -n 2 "$snippet" | tail -n 1 | grep -o '^# Description: .*' | sed 's/# Description: //')
+                
+                if [ -z "$lang" ]; then
+                    lang="unknown"
+                fi
+                
+                if [ -z "$desc" ]; then
+                    desc="No description"
+                fi
+                
+                echo -e "\033[1;32m$name\033[0m (\033[1;33m$lang\033[0m) - $desc"
+                echo -e "  \033[1;36mTags:\033[0m $tags"
+                found=true
+            fi
+        fi
+    done
+    
+    if [ "$found" = false ]; then
+        echo "No snippets found with tag: $search_tag"
+    fi
+}
+
+# Function to list all available tags
+list_tags() {
+    echo -e "\033[1;34m=== Available Tags ===\033[0m"
+    
+    local all_tags=""
+    
+    for snippet in "$SNIPPETS_DIR"/*; do
+        if [ -f "$snippet" ]; then
+            local tags=$(grep -o '^# Tags: .*' "$snippet" | sed 's/# Tags: //')
+            if [ -n "$tags" ]; then
+                all_tags="$all_tags,$tags"
+            fi
+        fi
+    done
+    
+    if [ -z "$all_tags" ]; then
+        echo "No tags found. Add tags with 'snippet tag <name> <tag1,tag2,...>'"
+        return 0
+    fi
+    
+    # Convert comma-separated list to newline-separated list, sort, and remove duplicates
+    echo "$all_tags" | tr ',' '\n' | sort | uniq | grep -v '^$' | while read -r tag; do
+        # Count snippets with this tag
+        local count=$(grep -l "^# Tags:.*\b$tag\b" "$SNIPPETS_DIR"/* 2>/dev/null | wc -l)
+        echo -e "\033[1;32m$tag\033[0m (\033[1;33m$count snippets\033[0m)"
+    done
+}
+
+# Register commands
+alias snippets="list_snippets"
+alias snippet_add="add_snippet"
+alias snippet_view="view_snippet"
+alias snippet_edit="edit_snippet"
+alias snippet_delete="delete_snippet"
+alias snippet_copy="copy_snippet"
+alias snippet_tag="tag_snippet"
+alias snippet_search="search_snippets"
+alias snippet_tags="list_tags"
+EOL
+
+# Create Task Manager plugin
+cat > "$COZYUI_DIR/plugins/task-manager/task-manager.sh" << 'EOL'
+#!/bin/bash
+
+# Task Manager plugin for CozyUI
+
+# Task file
+TASK_FILE="$HOME/.cozyui/data/tasks.json"
+
+# Ensure task file exists
+if [ ! -f "$TASK_FILE" ]; then
+    mkdir -p "$(dirname "$TASK_FILE")"
+    echo '[]' > "$TASK_FILE"
+fi
+
+# Function to list all tasks with categories and priorities
+list_tasks_advanced() {
+    echo -e "\033[1;34m=== Task Manager ===\033[0m"
+    
+    if [ ! -s "$TASK_FILE" ] || [ "$(cat "$TASK_FILE")" = "[]" ]; then
+        echo "No tasks found. Add tasks with 'taskman add <description>'"
+        return 0
+    fi
+    
+    # Check if jq is installed
+    if ! command -v jq >/dev/null 2>&1; then
+        echo -e "\033[1;31mError:\033[0m jq is required for advanced task management"
+        echo "Please install jq and try again"
+        return 1
+    fi
+    
+    # Display tasks by category
+    echo -e "\033[1;36mTasks by Category:\033[0m"
+    
+    # Get unique categories
+    local categories=$(jq -r '.[].category' "$TASK_FILE" | sort | uniq)
+    
+    for category in $categories; do
+        echo -e "\n\033[1;33m$category\033[0m"
+        
+        # Get tasks for this category
+        jq -r --arg cat "$category" '.[] | select(.category == $cat) | "[" + (if .completed then "✓" else "☐" end) + "] " + .priority + ": " + .description + (if .due_date then " (Due: " + .due_date + ")" else "" end)' "$TASK_FILE" | 
+        while IFS= read -r task; do
+            if [[ "$task" == "[✓]"* ]]; then
+                echo -e "  \033[1;32m$task\033[0m"
+            else
+                echo -e "  $task"
+            fi
+        done
+    done
+}
+
+# Function to add a new task with category and priority
+add_task_advanced() {
+    if [ -z "$1" ]; then
+        echo "Usage: taskman add <description> [--category <category>] [--priority <priority>] [--due <date>]"
+        return 1
+    fi
+    
+    # Check if jq is installed
+    if ! command -v jq >/dev/null 2>&1; then
+        echo -e "\033[1;31mError:\033[0m jq is required for advanced task management"
+        echo "Please install jq and try again"
+        return 1
+    fi
+    
+    local description=""
+    local category="General"
+    local priority="Medium"
+    local due_date=""
+    
+    # Parse arguments
+    while [ $# -gt 0 ]; do
+        case "$1" in
+            --category)
+                shift
+                category="$1"
+                shift
+                ;;
+            --priority)
+                shift
+                priority="$1"
+                shift
+                ;;
+            --due)
+                shift
+                due_date="$1"
+                shift
+                ;;
+            *)
+                if [ -z "$description" ]; then
+                    description="$1"
+                else
+                    description="$description $1"
+                fi
+                shift
+                ;;
+        esac
+    done
+    
+    # Add task to JSON file
+    local temp_file="$(mktemp)"
+    jq --arg desc "$description" \
+       --arg cat "$category" \
+       --arg prio "$priority" \
+       --arg due "$due_date" \
+       '. += [{"description": $desc, "category": $cat, "priority": $prio, "due_date": $due, "completed": false}]' \
+       "$TASK_FILE" > "$temp_file"
+    
+    mv "$temp_file" "$TASK_FILE"
+    
+    echo -e "\033[1;32mTask added:\033[0m $description"
+    echo -e "  Category: $category"
+    echo -e "  Priority: $priority"
+    if [ -n "$due_date" ]; then
+        echo -e "  Due Date: $due_date"
+    fi
+}
+
+# Function to mark a task as done
+mark_task_done_advanced() {
+    if [ -z "$1" ] || ! [[ "$1" =~ ^[0-9]+$ ]]; then
+        echo "Usage: taskman done <task_index>"
+        return 1
+    fi
+    
+    # Check if jq is installed
+    if ! command -v jq >/dev/null 2>&1; then
+        echo -e "\033[1;31mError:\033[0m jq is required for advanced task management"
+        echo "Please install jq and try again"
+        return 1
+    fi
+    
+    local task_index=$1
+    local task_count=$(jq '. | length' "$TASK_FILE")
+    
+    if [ "$task_index" -ge "$task_count" ] || [ "$task_index" -lt 0 ]; then
+        echo -e "\033[1;31mError:\033[0m Task index out of range"
+        return 1
+    fi
+    
+    # Get task description before marking as done
+    local task_desc=$(jq -r --arg idx "$task_index" '.[$idx | tonumber].description' "$TASK_FILE")
+    
+    # Mark task as done
+    local temp_file="$(mktemp)"
+    jq --arg idx "$task_index" '.[$idx | tonumber].completed = true' "$TASK_FILE" > "$temp_file"
+    
+    mv "$temp_file" "$TASK_FILE"
+    
+    echo -e "\033[1;32mMarked task as done:\033[0m $task_desc"
+}
+
+# Function to remove a task
+remove_task_advanced() {
+    if [ -z "$1" ] || ! [[ "$1" =~ ^[0-9]+$ ]]; then
+        echo "Usage: taskman remove <task_index>"
+        return 1
+    fi
+    
+    # Check if jq is installed
+    if ! command -v jq >/dev/null 2>&1; then
+        echo -e "\033[1;31mError:\033[0m jq is required for advanced task management"
+        echo "Please install jq and try again"
+        return 1
+    fi
+    
+    local task_index=$1
+    local task_count=$(jq '. | length' "$TASK_FILE")
+    
+    if [ "$task_index" -ge "$task_count" ] || [ "$task_index" -lt 0 ]; then
+        echo -e "\033[1;31mError:\033[0m Task index out of range"
+        return 1
+    fi
+    
+    # Get task description before removing
+    local task_desc=$(jq -r --arg idx "$
 
 # Get shell config file
 SHELL_CONFIG=$(get_shell_config)
 display_info "Shell config file: $SHELL_CONFIG"
 
 # Add CozyUI to shell config
-cat >> "$SHELL_CONFIG" << EOL
+if ! touch "$SHELL_CONFIG" 2>/dev/null; then
+    display_error "Cannot write to shell config file: $SHELL_CONFIG"
+fi
+
+# Check if CozyUI is already in shell config
+if grep -q "CozyUI Terminal Integration" "$SHELL_CONFIG" 2>/dev/null; then
+    display_warning "CozyUI integration already exists in $SHELL_CONFIG"
+    display_info "Skipping shell integration setup"
+else
+    # Add CozyUI to shell config
+    if ! cat >> "$SHELL_CONFIG" << EOL
 
 # CozyUI Terminal Integration
 export PATH="\$PATH:\$HOME/.cozyui/bin"
-source "\$HOME/.cozyui/config/config.sh"
-source "\$HOME/.cozyui/config/prompt.sh"
-source "\$HOME/.cozyui/config/shortcuts.sh"
+[ -f "\$HOME/.cozyui/config/config.sh" ] && source "\$HOME/.cozyui/config/config.sh"
+[ -f "\$HOME/.cozyui/config/prompt.sh" ] && source "\$HOME/.cozyui/config/prompt.sh"
+[ -f "\$HOME/.cozyui/config/shortcuts.sh" ] && source "\$HOME/.cozyui/config/shortcuts.sh"
 
 # CozyUI aliases
 alias cozyui="\$HOME/.cozyui/bin/cozyui.sh"
@@ -1302,14 +2011,40 @@ if [ "\$COZYUI_PLUGINS_AUTOLOAD" = "enabled" ]; then
     done
 fi
 EOL
+    then
+        display_warning "Failed to update shell config file"
+    else
+        display_success "Added CozyUI to shell config"
+    fi
+fi
 
 # Create symbolic link to make cozyui command available
-ln -sf "$COZYUI_DIR/bin/cozyui.sh" "$COZYUI_DIR/bin/cozyui"
-chmod +x "$COZYUI_DIR/bin/cozyui"
+if ! ln -sf "$COZYUI_DIR/bin/cozyui.sh" "$COZYUI_DIR/bin/cozyui"; then
+    display_warning "Failed to create symbolic link for cozyui command"
+fi
+
+# Ensure all scripts are executable
+for script in "$COZYUI_DIR/bin"/*.sh; do
+    if [ -f "$script" ]; then
+        if ! chmod +x "$script"; then
+            display_warning "Failed to set executable permission for $(basename "$script")"
+        fi
+    fi
+done
+display_success "Made scripts executable"
 
 # Apply default theme
-cp "$COZYUI_DIR/themes/dracula.theme" "$COZYUI_DIR/config/current_theme"
-echo "COZYUI_THEME=dracula" > "$COZYUI_DIR/config/theme_config"
+if [ -f "$COZYUI_DIR/themes/dracula.theme" ]; then
+    if ! cp "$COZYUI_DIR/themes/dracula.theme" "$COZYUI_DIR/config/current_theme"; then
+        display_warning "Failed to copy default theme"
+    fi
+    if ! echo "COZYUI_THEME=dracula" > "$COZYUI_DIR/config/theme_config"; then
+        display_warning "Failed to create theme configuration"
+    fi
+    display_success "Applied default theme"
+else
+    display_warning "Default theme file not found"
+fi
 
 # Final steps
 display_step "Finalizing installation"
@@ -1376,8 +2111,15 @@ chmod +x "$COZYUI_DIR/bin/cozyui-update.sh"
 
 # Set up cron job for auto-updates
 if command_exists crontab; then
-    (crontab -l 2>/dev/null; echo "0 0 * * * $COZYUI_DIR/bin/cozyui-update.sh >/dev/null 2>&1") | crontab -
-    display_success "Auto-update cron job set up"
+    if ! (crontab -l 2>/dev/null | grep -q "$COZYUI_DIR/bin/cozyui-update.sh"); then
+        if (crontab -l 2>/dev/null; echo "0 0 * * * $COZYUI_DIR/bin/cozyui-update.sh >/dev/null 2>&1") | crontab -; then
+            display_success "Auto-update cron job set up"
+        else
+            display_warning "Failed to set up auto-update cron job"
+        fi
+    else
+        display_info "Auto-update cron job already exists"
+    fi
 else
     display_warning "crontab not found. Auto-updates will not be scheduled."
 fi
